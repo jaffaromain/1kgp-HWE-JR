@@ -10,8 +10,11 @@ The data used in this study is obtained from the 1000 Genomes Project, which und
 
 ### Data Required:
 Data can be downloaded here: http://tcag.ca/tools/1000genomes.html
+
 'sampleTable`: table of quality statistics per SNP 
+
 'SnpTable': table of quality statistics per sample
+
 'Indep': binary format files of independent samples
 
 ## Repository Files:
@@ -29,11 +32,15 @@ Data can be downloaded here: http://tcag.ca/tools/1000genomes.html
 
 ## Dependencies
 PLINK v1.90
+
 R 4.2.3 (or newer)
 
 ## Running the Analysis
+
 *Clone the repository to your local machine
+
 *Ensure you have all the required dependencies installed
+
 *Navigate to the scripts/ directory and run scripts in the order reported above
 
 ## References
