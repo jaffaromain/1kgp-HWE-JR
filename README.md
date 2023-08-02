@@ -1,2 +1,3 @@
-# 1kgp-HWE-JR
-1000Genomes HWE Testing Files
+# Combining and Contrasting Hardy-Weinberg \newline Equilibrium  in Multi-Group Settings
+
+
