@@ -1,0 +1,190 @@
+---
+title: "Population HWE Script"
+author: "Jaffa Romain"
+date: "2023-04-03"
+output: pdf_document
+---
+
+# HWE By Population 
+```{r setup, include=FALSE}
+ knitr::opts_chunk$set(echo = TRUE)
+gc()
+ library(tidyverse)
+ library(data.table)
+```
+
+```{r}
+ ########################## Raw Data - Samples and SNP Info #########################
+ SampleTable <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/sampleTable.txt")) %>% filter(Omni1738 == 1)
+ snp_table <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/snpTable.txt")) %>% dplyr::select(c(Chr, SNP, GRCh37))
+
+ ##########################################################################
+ #Get Individual IDs for each Population
+ populations <- c("AFR","AMR","EAS","EUR")
+ for (pop in populations){
+   pop_sample<-SampleTable%>%filter(Continent==pop)%>%select(Ped,ID)
+   fwrite(pop_sample,paste0("Population_samples/",pop,"_sample.txt"),col.names = F,quote = F, row.names = F,sep="\t")
+ }
+
+```
+
+```{bash}
+ # go to directory where plink is
+ mkdir ~/bin
+ export PATH=$PATH:~/bin/
+ cp plink ~/bin
+ plink
+ ############ Plink Commands####################################
+ for f in Population_samples/AFR_sample.txt Population_samples/EUR_sample.txt  Population_samples/EAS_sample.txt  Population_samples/AMR_sample.txt 
+ do
+ plink --bfile indep --keep $f --make-bed --out Population_SNPs/$(basename $f .txt)-data
+ done
+
+ # getting genotype counts, maf,and Exact test results
+ for f in Population_SNPs/AFR_sample-data Population_SNPs/EUR_sample-data  Population_SNPs/EAS_sample-data Population_SNPs/AMR_sample-data
+ do
+ plink --bfile $f --reference-allele reference_alleles.txt --freqx --out  Population_SNPs/$(basename $f .txt)-freq
+ # Minor allele frequencies
+ plink --bfile $f --freq --out Population_SNPs/$(basename $f .txt)-maf
+ done
+```
+
+```{r}
+ for (pop in populations){
+
+ counts <- as.data.frame(fread(paste0("Population_SNPs/",pop,"_sample-data-freq.frqx")))
+
+ counts$Naa = counts$`C(HOM A1)`;counts$NAa = counts$`C(HET)`;counts$NAA = counts$`C(HOM A2)`
+
+ HWE <- data.frame(Delta_Test(counts$Naa, counts$NAa, counts$NAA)) %>% mutate(`-log10(P-value - Delta)` = -log10(Delta_p_val))
+
+ counts <- counts %>% dplyr::select(c(CHR, SNP, A1, A2, Naa, NAa, NAA)) %>% 
+   mutate(PAA = HWE$PAA,PAa = HWE$PAa,Paa= HWE$Paa,PA=HWE$PA,Pa=HWE$Pa,Delta = HWE$delta,se= HWE$se,`P-value` = HWE$Delta_p_val,`-log10P` = HWE$`-log10(P-value - Delta)`)
+
+ full <- left_join(counts, snp_table, by = "SNP") %>% dplyr::select(-Chr)  %>% filter(CHR != 24&CHR!=26)
+ 
+ maf <- as.data.frame(fread(paste0("Population_SNPs/",pop,"_sample-data-maf.frq"))
+ ) %>% dplyr::select(MAF, SNP)
+ all_hwe <- left_join(full, maf, by = "SNP")
+ 
+ ### Remove homog. SNPs
+ all_hwe <- all_hwe %>% filter(!is.na(`P-value`))  
+ fwrite(all_hwe, file=paste0("/Users/jaffa./Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_",pop,".txt"), col.names = T, quote = F,  row.names = F, sep = "\t")
+ }
+```
+
+```{r}
+rm(all_hwe);rm(full);rm(HWE);rm(maf);rm(counts)
+gc()
+```
+
+# By Population and Sex
+## Males
+```{r}
+ ################################ MALES ########################## 
+ SampleTable <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/sampleTable.txt")) %>% filter(Omni1738 == 1)%>%filter(PedSex==1)
+
+ snp_table <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/snpTable.txt")) %>% dplyr::select(c(Chr, SNP, GRCh37))
+ ###########################################################
+ #Get Individual IDs for each Population
+ populations <- c("AFR","AMR","EAS","EUR")
+ for (pop in populations){
+   pop_sample<-SampleTable%>%filter(Continent==pop)%>%select(Ped,ID)
+   fwrite(pop_sample,paste0("Population_samples/",pop,"_sample_males.txt"),col.names = F,quote = F, row.names = F,sep="\t")
+ }
+ 
+rm(all_hwe);rm(full);rm(HWE);rm(maf);rm(counts)
+gc()
+```
+
+```{bash}
+ ######Plink Commands##########
+ mkdir ~/bin
+ export PATH=$PATH:~/bin/
+ cp plink ~/bin
+ plink
+
+ for f in Population_samples/AFR_sample_males.txt Population_samples/EUR_sample_males.txt  Population_samples/EAS_sample_males.txt  Population_samples/AMR_sample_males.txt 
+ do
+ plink --bfile indep --keep $f --make-bed --out Population_SNPs/$(basename $f .txt)-data
+ done
+
+ # getting genotype counts, maf,and Exact test results
+ for f in Population_SNPs/AFR_sample_males-data Population_SNPs/EUR_sample_males-data  Population_SNPs/EAS_sample_males-data Population_SNPs/AMR_sample_males-data
+ do
+ plink --bfile $f --reference-allele reference_alleles.txt --freqx --out  Population_SNPs/$(basename $f .txt)-freq
+ # Minor allele frequencies
+ plink --bfile $f --freq --out Population_SNPs/$(basename $f .txt)-maf
+ done
+```
+
+```{r}
+results<-function(counts){
+ counts$Naa = counts$`C(HOM A1)`;counts$NAa = counts$`C(HET)`;counts$NAA = counts$`C(HOM A2)`
+
+ HWE <- data.frame(Delta_Test(counts$Naa, counts$NAa, counts$NAA)) %>% mutate(`-log10(P-value - Delta)` = -log10(Delta_p_val))
+
+ counts <- counts %>% dplyr::select(c(CHR, SNP, A1, A2, Naa, NAa, NAA)) %>% 
+   mutate(PAA = HWE$PAA,PAa = HWE$PAa,Paa= HWE$Paa,PA=HWE$PA,Pa=HWE$Pa,Delta = HWE$delta,se= HWE$se,`P-value` = HWE$Delta_p_val,`-log10P` = HWE$`-log10(P-value - Delta)`)
+}
+ for (pop in populations){
+   counts <- as.data.frame(fread(paste0("Population_SNPs/",pop,"_sample_males-data-freq.frqx")))
+   counts<-results(counts)
+
+   full <- left_join(counts, snp_table, by = "SNP") %>% dplyr::select(-Chr)  %>% filter(CHR != 24, CHR != 26)
+   maf <- as.data.frame(fread(paste0("Population_SNPs/",pop,"_sample_males-data-maf.frq"))
+   ) %>% dplyr::select(MAF, SNP)
+
+   all_hwe <- left_join(full, maf, by = "SNP")
+    ### Remove homog. SNPs
+   all_hwe <- all_hwe %>% filter(!is.na(`P-value`)) 
+   fwrite(all_hwe, paste0("/Users/jaffa./Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_",pop,"_males.txt"), col.names = T, quote = F,  row.names = F, sep = "\t")
+ }
+```
+
+## Females
+```{r}
+ ########################## females ########################## 
+ SampleTable <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/sampleTable.txt")) %>% filter(Omni1738 == 1)%>%filter(PedSex==2)
+
+ snp_table <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/snpTable.txt")) %>% dplyr::select(c(Chr, SNP, GRCh37, CallRate))
+ ##########################################################################
+ #Get Individual IDs for each Population
+ populations <- c("AFR","AMR","EAS","EUR")
+ for (pop in populations){
+   pop_sample<-SampleTable%>%filter(Continent==pop)%>%select(Ped,ID)
+   fwrite(pop_sample,paste0("Population_samples/",pop,"_sample_females.txt"),col.names = F,quote = F, row.names = F,sep="\t")}
+```
+
+```{bash}
+ mkdir ~/bin
+ export PATH=$PATH:~/bin/
+ cp plink ~/bin
+ plink
+ ########################## Plink Commands ####################################
+ for f in Population_samples/AFR_sample_females.txt Population_samples/EUR_sample_females.txt  Population_samples/EAS_sample_females.txt  Population_samples/AMR_sample_females.txt 
+ do
+ plink --bfile indep --keep $f --make-bed --out Population_SNPs/$(basename $f .txt)-data
+ done
+
+ # getting genotype counts, maf,and Exact test results
+ for f in Population_SNPs/AFR_sample_females-data Population_SNPs/EUR_sample_females-data  Population_SNPs/EAS_sample_females-data Population_SNPs/AMR_sample_females-data
+ do
+ plink --bfile $f --reference-allele reference_alleles.txt --freqx --out  Population_SNPs/$(basename $f .txt)-freq
+ # Minor allele frequencies
+ plink --bfile $f --freq --out Population_SNPs/$(basename $f .txt)-maf
+ done
+```
+
+```{r}
+ for (pop in populations){
+   counts <- as.data.frame(fread(paste0("Population_SNPs/",pop,"_sample_females-data-freq.frqx")))
+   counts<-results(counts)
+   full <- left_join(counts, snp_table, by = "SNP") %>% dplyr::select(-Chr)  %>% filter(CHR != 24&CHR!=26)
+   maf <- as.data.frame(fread(paste0("Population_SNPs/",pop,"_sample_females-data-maf.frq"))) %>% dplyr::select(MAF, SNP)
+   all_hwe <- left_join(full, maf, by = "SNP")
+   all_hwe <- all_hwe %>% filter(!is.na(`P-value`))  ### Remove homog. SNPs
+   fwrite(all_hwe, paste0("/Users/jaffa./Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_",pop,"_females.txt"), col.names = T, quote = F,  row.names = F, sep = "\t")
+ }
+```
+

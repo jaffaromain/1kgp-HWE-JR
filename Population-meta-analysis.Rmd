@@ -1,0 +1,255 @@
+---
+title: "Meta-analysis Results"
+author: "Jaffa Romain"
+date: "2023-04-04"
+output: pdf_document
+---
+```{r setup}
+library(tidyverse)
+library(data.table)
+```
+
+# Determining MAF threshold
+```{r}
+# library(ggpubr)
+# META_AFR<-as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/Meta-analysis/META_no_thresh_AFR.txt")) %>% mutate(Population="AFR")
+# META_AMR<-as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/Meta-analysis/META_no_thresh_AMR.txt")) %>% mutate(Population="AMR")
+# META_EUR<-as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/Meta-analysis/META_no_thresh_EUR.txt")) %>% mutate(Population="EUR")
+# META_EAS<-as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/Meta-analysis/META_no_thresh_EAS.txt")) %>% mutate(Population="EAS")
+# 
+# HWE_AFR <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_AFR.txt")) %>% mutate(Population="AFR")
+# 
+# HWE_AMR<- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_AMR.txt" )) %>% mutate(Population="AMR")
+# HWE_EUR<- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_EUR.txt" )) %>% mutate(Population="EUR")
+# 
+# HWE_EAS <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_EAS.txt")) %>% mutate(Population="EAS")
+# 
+# AFR<-inner_join(META_AFR,HWE_AFR,by=c("SNP","CHR")) %>% select(c(SNP,CHR,MAF,`P-value`,Meta.P.value))
+# AMR<-inner_join(META_AMR,HWE_AMR,by=c("SNP","CHR")) %>% select(c(SNP,CHR,MAF,`P-value`,Meta.P.value))
+# EUR<-inner_join(META_EUR,HWE_EUR,by=c("SNP","CHR")) %>% select(c(SNP,CHR,MAF,`P-value`,Meta.P.value))
+# EAS<-inner_join(META_EAS,HWE_EAS,by=c("SNP","CHR")) %>% select(c(SNP,CHR,MAF,`P-value`,Meta.P.value))
+# 
+# rm(HWE_AFR,HWE_AMR,HWE_EAS,HWE_EUR,META_AFR,META_AMR,META_EAS,META_EUR)
+# gc()
+# AFR=AFR %>% select(c(MAF,`P-value`,Meta.P.value))
+# AMR=AMR %>% select(c(MAF,`P-value`,Meta.P.value))
+# EUR=EUR %>% select(c(MAF,`P-value`,Meta.P.value))
+# EAS=EAS %>% select(c(MAF,`P-value`,Meta.P.value))
+# 
+# #filtered MAF
+# mafs<-seq(from=0.01,to=0.1,by=0.01)
+# ####### AFR
+# afr_plots<-function(i){
+#  p<- AFR%>%filter(MAF>=i)%>%ggplot(aes(x=-log10(Meta.P.value),y=-log10(`P-value`)))+geom_point(size=0.5,alpha=0.2)+geom_abline(slope = 1,intercept = 0,color="blue")+labs(subtitle = paste0("MAF>",i),x="",y="")
+#   return(p)
+#  }
+# afrlst<-list(afr_plots(0.01),afr_plots(0.02),afr_plots(0.03),afr_plots(0.04),afr_plots(0.05),afr_plots(0.06),afr_plots(0.07),afr_plots(0.08),afr_plots(0.09),afr_plots(0.1))
+# 
+# ##### AMR
+# amr_plots<-function(i){
+#  p<- AMR%>%filter(MAF>=i)%>%ggplot(aes(x=-log10(Meta.P.value),y=-log10(`P-value`)))+geom_point(size=0.5,alpha=0.2)+geom_abline(slope = 1,intercept = 0,color="blue")+labs(subtitle = paste0("MAF>",i),x="",y="")
+#   return(p)
+#  }
+# AMRlst<-list(amr_plots(0.01),amr_plots(0.02),amr_plots(0.03),amr_plots(0.04),amr_plots(0.05),amr_plots(0.06),amr_plots(0.07),amr_plots(0.08),amr_plots(0.09),amr_plots(0.1))
+# 
+# ###### EUR
+# eur_plots<-function(i){
+#  p<- EUR%>%filter(MAF>=i)%>%ggplot(aes(x=-log10(Meta.P.value),y=-log10(`P-value`)))+geom_point(size=0.5,alpha=0.2)+geom_abline(slope = 1,intercept = 0,color="blue")+labs(subtitle = paste0("MAF>",i),x="",y="")
+#   return(p)
+#  }
+# EURlst<-list(eur_plots(0.01),eur_plots(0.02),eur_plots(0.03),eur_plots(0.04),eur_plots(0.05),eur_plots(0.06),eur_plots(0.07),eur_plots(0.08),eur_plots(0.09),eur_plots(0.1))
+# 
+# ###### EAS
+# eas_plots<-function(i){
+#  p<- EAS%>%filter(MAF>=i)%>%ggplot(aes(x=-log10(Meta.P.value),y=-log10(`P-value`)))+geom_point(size=0.5,alpha=0.2)+geom_abline(slope = 1,intercept = 0,color="blue")+labs(subtitle = paste0("MAF>",i),x="",y="",)
+#   return(p)
+#  }
+# EASlst<-list(eas_plots(0.01),eas_plots(0.02),eas_plots(0.03),eas_plots(0.04),eas_plots(0.05),eas_plots(0.06),eas_plots(0.07),eas_plots(0.08),eas_plots(0.09),eas_plots(0.1))
+# library(ggpubr)
+# afrfig=ggarrange(plotlist = afrlst)
+# amrfig=ggarrange(plotlist = AMRlst)
+# eurfig=ggarrange(plotlist = EURlst)
+# easfig=ggarrange(plotlist = EASlst)
+# 
+# annotate_figure(afrfig,
+#      bottom = text_grob("-log10(Meta P-value)", color = "black", size = 12), left = text_grob("-log10(Mega P-value)", color = "black",size=12,rot = 90),
+#        fig.lab = "AFR", fig.lab.face = "bold")
+# 
+# annotate_figure(amrfig, bottom = text_grob("-log10(Meta P-value)", color = "black", size = 12), left = text_grob("-log10(Mega P-value)", color = "black",size=12,rot = 90) ,fig.lab = "AMR", fig.lab.face = "bold")
+# 
+# annotate_figure(eurfig, bottom = text_grob("-log10(Meta P-value)", color = "black", size = 12), left = text_grob("-log10(Mega P-value)", color = "black",size=12,rot = 90), fig.lab = "EUR", fig.lab.face = "bold")
+# 
+# annotate_figure(easfig, bottom = text_grob("-log10(Meta P-value)", color = "black", size = 12), left = text_grob("-log10(Mega P-value)", color = "black",size=12,rot = 90), fig.lab = "EAS", fig.lab.face = "bold")
+```
+
+```{r}
+############
+#MAF thresholds
+#AFR-0.05
+#AMR-0.06
+#EAS-0.04
+#EUR-0.03
+############
+ HWE_AFR_f <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_AFR_females.txt" )) %>% mutate(Population="AFR") %>% filter(MAF>0.05)
+HWE_AFR_f %>% fwrite(file="HWE Results/HWE_AFR_f_with_MAF_thresh.txt", col.names = T, quote = F,  row.names = F, sep = "\t")
+
+ HWE_AFR_m <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_AFR_males.txt" )) %>% mutate(Population="AFR") %>% filter(MAF>0.05)
+HWE_AFR_m %>% fwrite(file="HWE Results/HWE_AFR_m_with_MAF_thresh.txt", col.names = T, quote = F,  row.names = F, sep = "\t")
+
+HWE_AMR_f <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_AMR_females.txt" )) %>% mutate(Population="AMR")%>% filter(MAF>0.06)
+ HWE_AMR_f %>% fwrite(file="HWE Results/HWE_AMR_f_with_MAF_thresh.txt", col.names = T, quote = F,  row.names = F, sep = "\t")
+
+HWE_AMR_m <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_AMR_males.txt")) %>% mutate(Population="AMR")%>% filter(MAF>0.06)
+HWE_AMR_m %>% fwrite(file="HWE Results/HWE_AMR_m_with_MAF_thresh.txt", col.names = T, quote = F,  row.names = F, sep = "\t")
+
+HWE_EUR_f <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_EUR_females.txt" )) %>% mutate(Population="EUR")%>% filter(MAF>0.03)
+HWE_EUR_f %>% fwrite(file="HWE Results/HWE_EUR_f_with_MAF_thresh.txt", col.names = T, quote = F,  row.names = F, sep = "\t")
+
+HWE_EUR_m <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_EUR_males.txt")) %>% mutate(Population="EUR")%>% filter(MAF>0.03)
+HWE_EUR_m %>% fwrite(file="HWE Results/HWE_EUR_m_with_MAF_thresh.txt", col.names = T, quote = F,  row.names = F, sep = "\t")
+
+HWE_EAS_f <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_EAS_females.txt")) %>% mutate(Population="EAS")%>% filter(MAF>0.04)
+HWE_EAS_f %>% fwrite(file="HWE Results/HWE_EAS_f_with_MAF_thresh.txt", col.names = T, quote = F,  row.names = F, sep = "\t")
+
+HWE_EAS_m <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_EAS_males.txt")) %>% mutate(Population="EAS")%>% filter(MAF>0.04)
+HWE_EAS_m %>% fwrite(file="HWE Results/HWE_EAS_m_with_MAF_thresh.txt", col.names = T, quote = F,  row.names = F, sep = "\t")
+
+
+HWE_AFR <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_AFR.txt")) %>% mutate(Population="AFR") %>% filter(MAF>0.05)
+HWE_AFR %>% fwrite(file="HWE Results/HWE_AFR_with_MAF_thresh.txt", col.names = T, quote = F,  row.names = F, sep = "\t")
+
+HWE_AMR<- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_AMR.txt" )) %>% mutate(Population="AMR")%>% filter(MAF>0.06)
+HWE_AMR %>% fwrite(file="HWE Results/HWE_AMR_with_MAF_thresh.txt", col.names = T, quote = F,  row.names = F, sep = "\t")
+
+HWE_EUR<- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_EUR.txt" )) %>% mutate(Population="EUR")%>% filter(MAF>0.03)
+HWE_EUR %>% fwrite(file="HWE Results/HWE_EUR_with_MAF_thresh.txt", col.names = T, quote = F,  row.names = F, sep = "\t")
+
+HWE_EAS <- as.data.frame(fread("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_EAS.txt")) %>% mutate(Population="EAS")%>% filter(MAF>0.04)
+HWE_EAS %>% fwrite(file="HWE Results/HWE_EAS_with_MAF_thresh.txt", col.names = T, quote = F,  row.names = F, sep = "\t")
+```
+```{r}
+HWE_AFR_f <- as.data.frame(fread("HWE Results/HWE_AFR_f_with_MAF_thresh.txt" )) 
+HWE_AFR_m <- as.data.frame(fread("HWE Results/HWE_AFR_m_with_MAF_thresh.txt" )) 
+HWE_AMR_f <- as.data.frame(fread("HWE Results/HWE_AMR_f_with_MAF_thresh.txt" ))
+HWE_AMR_m <- as.data.frame(fread("HWE Results/HWE_AMR_m_with_MAF_thresh.txt")) 
+HWE_EUR_f <- as.data.frame(fread("HWE Results/HWE_EUR_f_with_MAF_thresh.txt" )) 
+HWE_EUR_m <- as.data.frame(fread("HWE Results/HWE_EUR_m_with_MAF_thresh.txt"))
+HWE_EAS_f <- as.data.frame(fread("HWE Results/HWE_EAS_f_with_MAF_thresh.txt")) 
+HWE_EAS_m <- as.data.frame(fread("HWE Results/HWE_EAS_m_with_MAF_thresh.txt"))
+HWE_AFR <- as.data.frame(fread("HWE Results/HWE_AFR_with_MAF_thresh.txt"))
+HWE_AMR<- as.data.frame(fread("HWE Results/HWE_AMR_with_MAF_thresh.txt" ))
+HWE_EUR<- as.data.frame(fread("HWE Results/HWE_EUR_with_MAF_thresh.txt" ))
+HWE_EAS <- as.data.frame(fread("HWE Results/HWE_EAS_with_MAF_thresh.txt"))
+```
+
+# Meta-analysis between sex within each population
+```{r, include=FALSE}
+###### Each population by Sex ######
+populations=c("AFR","AMR","EAS","EUR")
+for (pop in populations){
+HWE_f <- as.data.frame(read.table(paste0("~/Desktop/CHL5207 - Lab Work/HWE Results/HWE_results_",pop,"_females.txt"),  
+   header = T,  sep = "\t",  fill = TRUE,  quote = "", check.names = F))%>%select(SNP,Delta_female=Delta,`se_female`=`se`,`Delta P-value_female`=`P-value`,GRCh37,CHR,A1,A2)
+HWE_m <- as.data.frame(read.table(paste0("~/Desktop/CHL5207 - Lab Work//HWE Results/HWE_results_",pop,"_males.txt"),  
+  header = T,  sep = "\t",  fill = TRUE,  quote = "", check.names = F))%>%
+  select(SNP,Delta_male=Delta,`se_male`=`se`,`Delta P-value_male`=`P-value`)
+
+HWE_f_and_m<-inner_join(HWE_f,HWE_m,by="SNP") # join by common SNPS only
+HWE_f_and_m<-HWE_f_and_m %>% full_join(as.data.frame(meta_v1_inverse_variance(HWE_f_and_m)),by="SNP")
+HWE_f_and_m<-HWE_f_and_m %>% full_join(as.data.frame(meta_v2(HWE_f_and_m)),by="SNP")
+HWE_f_and_m<-HWE_f_and_m %>% full_join(as.data.frame(heterogen_test(HWE_f_and_m)),by="SNP") %>% filter(CHR!=23) %>% arrange(CHR,GRCh37)#no X-chromosome SNPs
+
+fwrite(HWE_f_and_m,paste0("Meta-analysis/META_no_thresh_",pop,".txt"), 
+            col.names = T, quote = F,  row.names = F, sep = "\t")
+}
+```
+
+# Meta-analysis across populations
+```{r}
+suf1="AFR";suf2="AMR";suf3="EAS";suf4="EUR"
+colnames(HWE_AFR) <- paste(colnames(HWE_AFR), suf1, sep = "_")
+HWE_AFR$SNP=HWE_AFR$SNP_AFR
+colnames(HWE_AMR) <- paste(colnames(HWE_AMR), suf2, sep = "_")
+HWE_AMR$SNP=HWE_AMR$SNP_AMR
+colnames(HWE_EAS) <- paste(colnames(HWE_EAS), suf3, sep = "_")
+HWE_EAS$SNP=HWE_EAS$SNP_EAS
+colnames(HWE_EUR) <- paste(colnames(HWE_EUR), suf4, sep = "_")
+HWE_EUR$SNP=HWE_EUR$SNP_EUR
+
+population_results_all<-list(HWE_AFR,HWE_EAS,HWE_EUR,HWE_AMR) %>% reduce(inner_join, by='SNP')
+
+HWE_all<-population_results_all %>% full_join(as.data.frame(meta_v1_inverse_variance(population_results_all)),by="SNP")
+HWE_all<-HWE_all %>% full_join(as.data.frame(meta_v2_directional(population_results_all)),by="SNP")
+HWE_all<-HWE_all %>% full_join(as.data.frame(heterogen_test(population_results_all)),by="SNP") %>% filter(CHR_AMR!=23) %>% arrange(CHR_AMR,GRCh37_AMR)
+
+#no X-chromosome SNPs
+fwrite(HWE_all,paste0("Meta-analysis/META_all.txt"), 
+            col.names = T, quote = F,  row.names = F, sep = "\t")
+```
+
+# Across Populations and Sexes
+```{r}
+suf1="AFR_f";suf2="AFR_m";suf3="AMR_f";suf4="AMR_m";suf5="EUR_f";suf6="EUR_m";suf7="EAS_f";suf8="EAS_m"
+colnames(HWE_AFR_f) <- paste(colnames(HWE_AFR_f), suf1, sep = "_")
+HWE_AFR_f$SNP=HWE_AFR_f$SNP_AFR_f
+colnames(HWE_AFR_m) <- paste(colnames(HWE_AFR_m), suf2, sep = "_")
+HWE_AFR_m$SNP=HWE_AFR_m$SNP_AFR_m
+
+colnames(HWE_AMR_f) <- paste(colnames(HWE_AMR_f), suf3, sep = "_")
+HWE_AMR_f$SNP=HWE_AMR_f$SNP_AMR_f
+colnames(HWE_AMR_m) <- paste(colnames(HWE_AMR_m), suf4, sep = "_")
+HWE_AMR_m$SNP=HWE_AMR_m$SNP_AMR_m
+
+colnames(HWE_EUR_f) <- paste(colnames(HWE_EUR_f), suf5, sep = "_")
+HWE_EUR_f$SNP=HWE_EUR_f$SNP_EUR_f
+colnames(HWE_EUR_m) <- paste(colnames(HWE_EUR_m), suf6, sep = "_")
+HWE_EUR_m$SNP=HWE_EUR_m$SNP_EUR_m
+
+colnames(HWE_EAS_f) <- paste(colnames(HWE_EAS_f), suf7, sep = "_")
+HWE_EAS_f$SNP=HWE_EAS_f$SNP_EAS_f
+colnames(HWE_EAS_m) <- paste(colnames(HWE_EAS_m), suf8, sep = "_")
+HWE_EAS_m$SNP=HWE_EAS_m$SNP_EAS_m
+
+population_results_all2<-list(HWE_AFR_f,HWE_EAS_f,HWE_EUR_f,HWE_AMR_f,HWE_AFR_m,HWE_EAS_m,HWE_EUR_m,HWE_AMR_m) %>% reduce(inner_join, by='SNP')
+
+HWE_all2<-population_results_all2 %>% full_join(as.data.frame(meta_v1_inverse_variance(population_results_all2)),by="SNP")
+HWE_all2<-HWE_all2 %>% full_join(as.data.frame(meta_v2_directional(population_results_all2)),by="SNP")
+HWE_all2<-HWE_all2 %>% full_join(as.data.frame(heterogen_test(population_results_all2)),by="SNP") 
+
+HWE_all2<-HWE_all2 %>% mutate(CHR=CHR_AFR_m,GRCh37=GRCh37_AFR_m) %>% select(-c(starts_with("CHR_"),starts_with("GRCh37_"),starts_with("SNP_"))) %>% filter(CHR!=23) %>% arrange(CHR,GRCh37)
+fwrite(HWE_all2,paste0("Meta-analysis/META_all2.txt"), 
+            col.names = T, quote = F,  row.names = F, sep = "\t")
+```
+
+# Meta-analysis across populations for males only
+```{r}
+population_results_m<-list(HWE_AFR_m,HWE_EAS_m,HWE_EUR_m,HWE_AMR_m) %>% reduce(inner_join, by='SNP')
+HWE_males<-population_results_m %>% full_join(as.data.frame(meta_v1_inverse_variance(population_results_m)),by="SNP")
+HWE_males<-HWE_males %>% full_join(as.data.frame(meta_v2_directional(population_results_m)),by="SNP")
+HWE_males<-HWE_males %>% full_join(as.data.frame(heterogen_test(population_results_m)),by="SNP") %>%  mutate(CHR=CHR_AFR_m,GRCh37=GRCh37_AFR_m) %>% select(-c(starts_with("CHR_"),starts_with("GRCh37_"),starts_with("SNP_"))) %>% filter(CHR!=23) %>% arrange(CHR,GRCh37)
+#no X-chromosome SNPs
+fwrite(HWE_males,paste0("Meta-analysis/META_males.txt"), 
+            col.names = T, quote = F,  row.names = F, sep = "\t")
+```
+
+# Meta-analysis across populations for females only
+```{r}
+population_results_f <-list(HWE_AFR_f ,HWE_EAS_f ,HWE_EUR_f ,HWE_AMR_f ) %>% reduce(inner_join, by='SNP')
+HWE_females<-population_results_f %>% full_join(as.data.frame(meta_v1_inverse_variance(population_results_f)),by="SNP")
+HWE_females<-HWE_females %>% full_join(as.data.frame(meta_v2_directional(population_results_f)),by="SNP")
+HWE_females1<-HWE_females %>% full_join(as.data.frame(heterogen_test(population_results_f)),by="SNP") %>%  mutate(CHR=CHR_AFR_f,GRCh37=GRCh37_AFR_f) %>% select(-c(starts_with("CHR_"),starts_with("GRCh37_"),starts_with("SNP_"))) %>% filter(CHR==23) %>% arrange(CHR,GRCh37)
+#no X-chromosome SNPs
+fwrite(HWE_females1,paste0("Meta-analysis/META_females_xchr.txt"), 
+            col.names = T, quote = F,  row.names = F, sep = "\t")
+
+HWE_females2<-HWE_females %>% full_join(as.data.frame(heterogen_test(population_results_f)),by="SNP") %>%  mutate(CHR=CHR_AFR_f,GRCh37=GRCh37_AFR_f) %>% select(-c(starts_with("CHR_"),starts_with("GRCh37_"),starts_with("SNP_"))) %>% filter(CHR!=23) %>% arrange(CHR,GRCh37)
+#no X-chromosome SNPs
+fwrite(HWE_females2,paste0("Meta-analysis/META_females.txt"), 
+            col.names = T, quote = F,  row.names = F, sep = "\t")
+```
+
+```{r}
+rm(list=c("HWE_f_and_m","HWE_males","population_results_all2","population_results_all","population_results_f","population_results_m","HWE_females1","HWE_females2","HWE_f","HWE_females","HWE_m","suf1","suf2","suf3","suf4","suf5","suf6","suf7","suf8"))
+library(sjmisc)
+gc()
+```
+
